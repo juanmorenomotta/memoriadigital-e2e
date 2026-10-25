@@ -33,7 +33,7 @@ El alcance comprende la verificación integral del módulo **Difuntos**, con én
 ### 2.2 Datos y configuración del sitio
 
 1. **Usuario de pruebas:** usuario del grupo *Registered* (sin permisos ACL de componente) para validar el acceso por propiedad (`created_by`). Nunca usar un Super User para estas pruebas.
-2. **Credenciales fuera del código:** guardarlas solo en `tests/e2e/.env` (ignorado por git), basado en `.env.example`:
+2. **Credenciales fuera del código:** guardarlas solo en el `.env` del repositorio `memoriadigital-e2e` (ignorado por git), basado en `.env.example`:
    ```
    BASE_URL=http://localhost/memorial/
    E2E_USER=<usuario_de_pruebas>
@@ -47,7 +47,7 @@ El alcance comprende la verificación integral del módulo **Difuntos**, con én
 ### 2.3 Instalación
 
 ```powershell
-cd d:\xampp\htdocs\memorial\tests\e2e
+cd memoriadigital-e2e        # ruta donde se clonó el repositorio de pruebas
 npm install
 npx playwright install chromium
 Copy-Item .env.example .env   # luego editar con las credenciales de prueba
@@ -72,29 +72,31 @@ npx playwright test
 ## 4. Arquitectura de Automatización
 
 ```text
-memorial/
-└── tests/
-    └── e2e/
-        ├── fixtures/              # Imágenes de muestra y datos sintéticos
-        │   ├── images/
-        │   │   ├── principal-test.jpg
-        │   │   └── galeria-test.jpg
-        │   └── difuntos.data.ts
-        ├── pages/                 # Page Object Model (POM)
-        │   ├── BasePage.ts        # Manejo común de URLs, esperas y alertas
-        │   ├── LoginPage.ts       # Acceso y autenticación en Joomla
-        │   ├── MisDifuntosPage.ts # Listado de difuntos del usuario
-        │   └── DifuntoEditPage.ts # Formulario de difunto (pestañas y campos)
-        ├── specs/                 # Casos de prueba automatizados
-        │   ├── 01_auth_access.spec.ts
-        │   ├── auth.setup.ts      # Login único; guarda la sesión en .auth/user.json
-        │   ├── 02_difunto_crud.spec.ts
-        │   ├── 03_multimedia.spec.ts
-        │   └── 04_ubicacion_mapa.spec.ts
-        ├── .auth/user.json        # storageState generado (ignorado por git)
-        ├── playwright.config.ts   # Timeouts, baseURL, proyectos setup/chromium
-        └── package.json           # Dependencias de Playwright
+memoriadigital-e2e/
+├── fixtures/                  # Imágenes de muestra y datos sintéticos
+│   ├── images/
+│   │   ├── principal-test.jpg
+│   │   └── galeria-test.jpg
+│   └── difuntos.data.ts
+├── pages/                     # Page Object Model (POM)
+│   ├── BasePage.ts            # Manejo común de URLs, esperas y alertas
+│   ├── LoginPage.ts           # Acceso y autenticación en Joomla
+│   ├── MisDifuntosPage.ts     # Listado de difuntos del usuario
+│   └── DifuntoEditPage.ts     # Formulario de difunto (pestañas y campos)
+├── specs/                     # Casos de prueba automatizados
+│   ├── 01_auth_access.spec.ts
+│   ├── auth.setup.ts          # Login único; guarda la sesión en .auth/user.json
+│   ├── 02_difunto_crud.spec.ts
+│   ├── 03_multimedia.spec.ts
+│   └── 04_ubicacion_mapa.spec.ts
+├── routes.ts                  # URLs del frontend por idioma (/es/, /en/)
+├── .auth/user.json            # storageState generado (ignorado por git)
+├── .env                       # Credenciales y BASE_URL (ignorado por git)
+├── playwright.config.ts       # Timeouts, baseURL, proyectos setup/chromium
+└── package.json               # Dependencias de Playwright
 ```
+
+El repositorio es independiente de la aplicación: no lee archivos de `htdocs/` y solo la contacta por HTTP usando `BASE_URL`.
 
 ---
 
@@ -121,7 +123,7 @@ memorial/
 ## 6. Fases de Implementación y Prioridades
 
 ### 🟢 Fase 1: Entorno Base y Autenticación/Permisos
-- [x] Inicialización de `package.json` y `playwright.config.ts` dentro de `tests/e2e/`.
+- [x] Inicialización de `package.json` y `playwright.config.ts` en la raíz del repositorio de pruebas.
 - [x] Creación de `LoginPage.ts`, `.env.example` y `.gitignore`.
 - [x] Redacción de los specs **E2E-01**, **E2E-02** y **E2E-03** (`01_auth_access.spec.ts`).
 - [x] Verificar prerrequisitos de la sección 2 e instalar dependencias.
@@ -134,7 +136,7 @@ memorial/
 - [ ] Verificación de flujo completo de guardado y persistencia en base de datos.
 
 ### 🟡 Fase 3: Regresión Multimedia (Causa Raíz Resuelta)
-- [ ] Creación de fixtures de imágenes JPG en `tests/e2e/fixtures/images/`.
+- [ ] Creación de fixtures de imágenes JPG en `fixtures/images/`.
 - [ ] Automatización de **E2E-07**, **E2E-08**, **E2E-09**, **E2E-10** y **E2E-11**.
 - [ ] Validación de eventos AJAX, respuestas JSON, DOM reactivo y diálogos de confirmación.
 
@@ -240,7 +242,7 @@ Una vez estabilizadas las Fases 1 a 3, se documentará el procedimiento como ski
 - **Frontmatter:** `name` y `description` (cuándo usarla: crear, ejecutar o depurar pruebas E2E de `com_legado`).
 - **Contenido previsto:**
   1. Prerrequisitos (resumen de la sección 2) y variables de `.env`.
-  2. Estructura de `tests/e2e/` y convención Page Object Model.
+  2. Estructura del repositorio `memoriadigital-e2e` y convención Page Object Model.
   3. Convenciones de selectores (IDs, no textos) y manejo de diálogos `confirm`.
   4. Patrón de limpieza (teardown) de datos e imágenes de prueba.
   5. Comandos de ejecución, tabla de solución de problemas (sección 9) y estrategia `storageState` (sección 8).

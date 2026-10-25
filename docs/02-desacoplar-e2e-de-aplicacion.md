@@ -15,8 +15,9 @@ Revisión del repositorio `memoriadigital-e2e` (fecha: 2026-10-24, tras migrar y
 | Rutas de la aplicación | Centralizadas en `routes.ts`; ningún spec contiene `index.php/...` | **Hecho** (Fase B) |
 | Idioma | Cada caso se genera para `/es/` y `/en/` desde `LANGUAGES` | **Hecho** (Fase B) |
 | Ubicación física | `d:\xampp\htdocs\memoriadigital-e2e`: fuera de `memorial/` pero **dentro de `htdocs`** | Mover fuera de `htdocs` (Fase A) |
-| Exposición web | Apache publica `.env`, `.git/config` y `package.json` del repositorio | Bloquear o mover (Fase A) |
-| Documentación | El documento 01 aún usa rutas `tests/e2e/...` (5 referencias) | Actualizar (Fase A) |
+| Exposición web | Apache publica `.env`, `.env.local` y `.git/config` del repositorio | Bloquear o mover (Fase A) |
+| Documentación | El documento 01 ya usa rutas relativas a la raíz (0 referencias a `tests/e2e/`) | **Hecho** (Fase A) |
+| Archivos de entorno | `.env.local` y `.env.prod` existen, seleccionables con `TEST_ENV`; `.gitignore` cubre `.env*` y preserva `.env.example` | **Hecho** (Fase B) |
 | Limpieza de datos | El plan propone revisar `images/legado/difuntos/` en disco | Hacerla por interfaz o HTTP (Fase B) |
 
 ---
@@ -103,20 +104,48 @@ El parámetro `return` conserva el idioma de origen, así que el flujo de redire
 
 ---
 
-## 4. Plan por fases
+## 4. Configuración por entorno (`TEST_ENV`)
+
+**Estado: implementado.** `playwright.config.ts` resuelve el entorno antes de definir la configuración:
+
+```ts
+export const TEST_ENV = process.env.TEST_ENV ?? 'local';
+const ENV_FILES = [`.env.${TEST_ENV}`, '.env'].filter((file) => fs.existsSync(path.resolve(__dirname, file)));
+for (const file of ENV_FILES) dotenv.config({ path: path.resolve(__dirname, file) });
+```
+
+Reglas:
+
+1. Se carga primero `.env.<TEST_ENV>` y después `.env` como respaldo **por variable** (`dotenv` no sobreescribe lo ya definido, así que el archivo específico gana).
+2. `TEST_ENV` por defecto es `local`, por lo que `npx playwright test` sigue funcionando sin exportar nada.
+3. Si no aparece `BASE_URL` en ninguno de los archivos, la configuración falla con un mensaje que lista qué archivos se intentaron leer.
+
+```powershell
+npx playwright test                    # TEST_ENV=local  -> .env.local + .env
+$env:TEST_ENV='prod'; npx playwright test   #                -> .env.prod  + .env
+```
+
+Verificado: con `TEST_ENV=check` y un `.env.check` que solo definía `BASE_URL`, la suite apuntó a esa URL y tomó las credenciales de `.env`, lo que confirma la precedencia y el respaldo por variable.
+
+**Pendiente:** `.env.prod` sigue siendo una copia de los valores locales (`http://localhost/memorial/` y la misma cuenta). Debe completarse con `BASE_URL=https://memoriadigital.org/` y una cuenta propia antes de usar `TEST_ENV=prod`.
+
+---
+
+## 5. Plan por fases
 
 ### Fase A: repositorio independiente
 - [x] Crear la carpeta `memoriadigital-e2e`. **Matiz:** quedó en `d:\xampp\htdocs\memoriadigital-e2e`, fuera de `memorial/` pero dentro de `htdocs`; moverla es trabajo pendiente.
 - [x] Copiar `tests/e2e/` y `tests/docs/` (copia, sin mover el original).
 - [x] Abrir la carpeta en otro VS Code, ejecutar `npm install` y `npx playwright install chromium` (`@playwright/test` 1.64.1, `chromium-1248`).
 - [x] Ejecutar la suite desde el repositorio nuevo: **7 pruebas** (1 setup + 6, tras añadir el segundo idioma) en verde contra `localhost`.
-- [ ] Inicializar git (`git init`) **y hacer el primer commit**. `git init` está hecho (rama `main`), pero **no hay ningún commit**: los 9 elementos del proyecto siguen sin seguimiento (`??`).
-- [ ] Actualizar las rutas del documento 01 (`tests/e2e/` pasa a la raíz). Pendiente: quedan 5 referencias en las líneas 36, 50, 124, 137 y 243.
+- [x] Inicializar git (`git init`) **y hacer el primer commit**. Rama `main`, commit `e6245fb first commit`.
+- [x] Actualizar las rutas del documento 01 (`tests/e2e/` pasa a la raíz). Verificado: 0 referencias a `tests/e2e/` en el documento 01.
 - [x] Cuando el repositorio nuevo funcione, quitar `tests/` del repositorio `memoriadigital`. Verificado: `D:\xampp\htdocs\memorial\tests` ya no existe.
 
 ### Fase B: configuración por entorno (apuntar a memoriadigital.org)
 - [x] Quitar el valor por defecto de `BASE_URL` en `playwright.config.ts`; que falle si falta.
-- [ ] Crear `.env.local` y `.env.prod`, elegidos con la variable `TEST_ENV`.
+- [x] Crear `.env.local` y `.env.prod`, elegidos con la variable `TEST_ENV`. `playwright.config.ts` carga `.env.<TEST_ENV>` (por defecto `local`) y luego `.env` como respaldo por variable. **Pendiente:** `.env.prod` sigue apuntando a `localhost/memorial` y reutiliza las credenciales locales; hay que darle el `BASE_URL` y la cuenta reales antes de usarlo.
+- [x] `.gitignore` cubre `.env*` con excepción de `.env.example` (antes solo ignoraba `.env`, así que `.env.local` y `.env.prod` quedaban expuestos a un `git add .`).
 - [x] Mover `index.php/es/component/legado?...` a un módulo `routes.ts` (sección 3).
 - [x] Multi-idioma: `LANGUAGES` en `routes.ts` genera cada caso para `/es/` y `/en/`.
 - [ ] Regenerar `.auth/user.json` por entorno; nunca compartirlo entre local y producción.
@@ -130,23 +159,23 @@ El parámetro `return` conserva el idioma de origen, así que el flujo de redire
 
 ---
 
-## 5. Riesgos al apuntar a producción
+## 6. Riesgos al apuntar a producción
 
 1. **Escritura real.** Las Fases 2 y 3 crean y borran difuntos e imágenes. Se recomienda un entorno de staging para las pruebas de escritura; en producción, solo pruebas de lectura (smoke) o una cuenta dedicada con datos prefijados `E2E_` que se limpian al terminar. Decisión pendiente.
 2. **Política del plan 01.** La sección 2.2, punto 6, dice "nunca contra producción". Debe reemplazarse por una política explícita de qué suites pueden correr en producción.
 3. **Bloqueos del hosting.** Un WAF, límites de intentos de login, CAPTCHA o protección anti-bots pueden rechazar al navegador automatizado, sobre todo desde la IP de un contenedor. Probarlo temprano con la suite actual.
-4. **Latencia real.** Los tiempos con internet difieren de XAMPP. Los timeouts actuales son 120 s por prueba, 90 s de navegación y 20 s por acción, calibrados para el Joomla local (4–6 s de TTFB); en producción hay que medirlos de nuevo.
+4. **Latencia real.** Los tiempos con internet difieren de XAMPP. Los timeouts actuales son 120 s por prueba, 90 s de navegación y 60 s por acción, calibrados con un TTFB local de 2–6 s; en producción hay que medirlos de nuevo.
 5. **Datos de referencia.** El entorno destino necesita un usuario del grupo Registered y un cementerio publicado con GPS. Son prerrequisitos, no algo que la prueba cree.
 6. **Credenciales.** Usar una cuenta y contraseña propias para producción, guardadas solo como secreto del CI.
-7. **Repositorio dentro de `htdocs` (activo).** Apache sirve el `.env` completo (credenciales `E2E_USER`/`E2E_PASS`) y el `.git/config` del repositorio en `http://localhost/memoriadigital-e2e/.env`. `.gitignore` no protege de esto. Mientras siga bajo `htdocs`, hay que mover la carpeta o excluirla en la configuración de Apache.
+7. **Repositorio dentro de `htdocs` (activo).** Apache sirve el `.env`, el `.env.local` completo (credenciales `E2E_USER`/`E2E_PASS`) y el `.git/config` del repositorio en `http://localhost/memoriadigital-e2e/.env`. `.gitignore` evita filtrarlas a git, pero **no** a HTTP. Mientras siga bajo `htdocs`, hay que mover la carpeta o excluirla en la configuración de Apache.
 
 ---
 
-## 6. Criterios de aceptación de la Fase A
+## 7. Criterios de aceptación de la Fase A
 
-1. El repositorio nuevo no referencia ninguna ruta de `htdocs/memorial`. **Cumplido.**
+1. El repositorio nuevo no referencia ninguna ruta de `htdocs/memorial`. **Cumplido** (verificado en `docs/01` y en el código).
 2. `npm install` y la suite se ejecutan desde la carpeta nueva con `exit code 0`. **Cumplido.**
 3. La suite pasa contra `localhost`: hoy son 7 pruebas (setup + 6 por los dos idiomas), con `workers: 1` porque XAMPP no sostiene dos sesiones concurrentes. **Cumplido.**
-4. `.env` y `.auth/` están ignorados por git. **Cumplido** (verificado en `.gitignore`).
+4. `.env`, sus variantes (`.env.local`, `.env.prod`) y `.auth/` están ignorados por git, y `.env.example` sí se versiona. **Cumplido** (verificado con `git check-ignore`).
 5. El repositorio está fuera de `htdocs`, o la carpeta está excluida de Apache. **Pendiente.**
-6. Existe al menos un commit con el estado inicial. **Pendiente.**
+6. Existe al menos un commit con el estado inicial. **Cumplido** (`e6245fb`).

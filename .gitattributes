@@ -1,0 +1,15 @@
+# Normaliza los finales de linea en el repositorio independientemente de
+# core.autocrlf de cada maquina. El contenedor y GitHub Actions usan Linux.
+* text=auto eol=lf
+
+*.ts    text eol=lf
+*.json  text eol=lf
+*.md    text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+
+# Binarios: sin conversion
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.zip   binary

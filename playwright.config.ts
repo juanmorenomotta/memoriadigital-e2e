@@ -1,11 +1,24 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { defineConfig } from '@playwright/test';
 import dotenv from 'dotenv';
 
-dotenv.config();
+// TEST_ENV selecciona el archivo de entorno: .env.<TEST_ENV> y luego .env como respaldo.
+// dotenv no sobreescribe variables ya definidas, asi que el primer archivo gana.
+export const TEST_ENV = process.env.TEST_ENV ?? 'local';
+const ENV_FILES = [`.env.${TEST_ENV}`, '.env'].filter((file) =>
+  fs.existsSync(path.resolve(__dirname, file)),
+);
+for (const file of ENV_FILES) {
+  dotenv.config({ path: path.resolve(__dirname, file) });
+}
 
 const baseURL = process.env.BASE_URL;
 if (!baseURL) {
-  throw new Error('Falta BASE_URL en .env (ver .env.example).');
+  throw new Error(
+    `Falta BASE_URL. Se buscó en: ${ENV_FILES.join(', ') || '(ningún archivo .env encontrado)'}. ` +
+      'Ver .env.example.',
+  );
 }
 
 // El Joomla local tarda 4-6 s en servir el HTML y ~51 recursos por pagina,
@@ -23,7 +36,9 @@ export default defineConfig({
   use: {
     baseURL,
     navigationTimeout: 90_000,
-    actionTimeout: 20_000,
+    // El click de login dispara una navegacion completa; con TTFB de 2-6 s en
+    // XAMPP, 20 s se quedaba corto de forma intermitente.
+    actionTimeout: 60_000,
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
