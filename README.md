@@ -127,11 +127,19 @@ memoriadigital-e2e/
 ├── docs/
 │   ├── 01-Plan-Pruebas-Regresion-E2E-Difuntos.md
 │   └── 02-desacoplar-e2e-de-aplicacion.md
+├── fixtures/                    # Datos sintéticos e imágenes de muestra
+│   ├── difuntos.data.ts         # generación de difuntos únicos de prueba
+│   └── images/                  # JPG de prueba (principal y galería)
 ├── pages/                       # Page Object Model
-│   └── LoginPage.ts             # navegación al login, credenciales y submit
+│   ├── LoginPage.ts             # navegación al login, credenciales y submit
+│   ├── DifuntoEditPage.ts       # formulario de alta/edición y multimedia
+│   └── MisDifuntosPage.ts       # listado "Mis Difuntos" y borrado en lote
 ├── specs/                       # Casos de prueba
 │   ├── auth.setup.ts            # login único; guarda storageState
-│   └── 01_auth_access.spec.ts   # E2E-01, E2E-02, E2E-03 por idioma
+│   ├── 01_auth_access.spec.ts   # E2E-01, E2E-02, E2E-03 por idioma
+│   ├── 02_difunto_crud.spec.ts  # E2E-04, E2E-05, E2E-06 por idioma
+│   ├── 03_multimedia.spec.ts    # E2E-07 a E2E-11 por idioma
+│   └── 04_ubicacion_mapa.spec.ts # E2E-12, E2E-13 por idioma
 ├── routes.ts                    # única fuente de verdad de las URLs
 ├── playwright.config.ts         # entorno, timeouts, workers, proyectos
 ├── .env.example
@@ -174,8 +182,18 @@ test.use({ storageState: { cookies: [], origins: [] } });
 | E2E-01 | Login de usuario registrado | `es`, `en` |
 | E2E-02 | Nuevo difunto carga sin bucle de redirección (200 + `#jform_id`) | `es`, `en` |
 | E2E-03 | Anónimo es redirigido al login | `es`, `en` |
+| E2E-04 | Crear difunto con datos obligatorios mínimos | `es`, `en` |
+| E2E-05 | Validación de campos requeridos (nombre, apellidos) | `es`, `en` |
+| E2E-06 | Editar difunto existente propio y persistir cambios | `es`, `en` |
+| E2E-07 | Carga de imagen principal (input y drag & drop) | `es`, `en` |
+| E2E-08 | Carga múltiple en galería (`{id}_2.jpg`, `{id}_3.jpg`) | `es`, `en` |
+| E2E-09 | Eliminación de imagen de galería con confirmación | `es`, `en` |
+| E2E-10 | Eliminación de imagen principal con confirmación | `es`, `en` |
+| E2E-11 | Persistencia de imágenes al recargar el formulario | `es`, `en` |
+| E2E-12 | Cambio de cementerio rellena coordenadas y recentra el mapa | `es`, `en` |
+| E2E-13 | Marcado manual de coordenadas en el mapa | `es`, `en` |
 
-**Total: 7 pruebas** (1 setup + 3 casos × 2 idiomas).
+**Total: 27 pruebas** (1 setup + 13 casos × 2 idiomas).
 
 ---
 

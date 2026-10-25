@@ -130,24 +130,26 @@ El repositorio es independiente de la aplicación: no lee archivos de `htdocs/` 
 - [x] Crear `.env` local y ejecutar los tests hasta que pasen.
 - [x] Sesión reutilizable con `storageState` (`auth.setup.ts`) y ejecución en paralelo estable (ver sección 8).
 
-### 🟡 Fase 2: Automatización CRUD de Difuntos
-- [ ] Creación de `DifuntoEditPage.ts` y `MisDifuntosPage.ts`.
-- [ ] Automatización de **E2E-04** (crear nuevo difunto) y **E2E-06** (edición de difunto propio).
-- [ ] Verificación de flujo completo de guardado y persistencia en base de datos.
+### 🟢 Fase 2: Automatización CRUD de Difuntos
+- [x] Creación de `DifuntoEditPage.ts` y `MisDifuntosPage.ts`.
+- [x] Automatización de **E2E-04** (crear nuevo difunto), **E2E-05** (validación de campos requeridos) y **E2E-06** (edición de difunto propio) en `02_difunto_crud.spec.ts`.
+- [x] Verificación de flujo completo de guardado y persistencia en base de datos.
 
-### 🟡 Fase 3: Regresión Multimedia (Causa Raíz Resuelta)
-- [ ] Creación de fixtures de imágenes JPG en `fixtures/images/`.
-- [ ] Automatización de **E2E-07**, **E2E-08**, **E2E-09**, **E2E-10** y **E2E-11**.
-- [ ] Validación de eventos AJAX, respuestas JSON, DOM reactivo y diálogos de confirmación.
+### 🟢 Fase 3: Regresión Multimedia (Causa Raíz Resuelta)
+- [x] Creación de fixtures de imágenes JPG en `fixtures/images/` (`principal-test.jpg`, `galeria-test.jpg`, `galeria-test-2.jpg`).
+- [x] Automatización de **E2E-07**, **E2E-08**, **E2E-09**, **E2E-10** y **E2E-11** en `03_multimedia.spec.ts`.
+- [x] Validación de eventos AJAX, respuestas JSON, DOM reactivo y diálogos de confirmación.
 
-### ⚪ Fase 4: Pruebas de Ubicación/Mapa y Reportes
-- [ ] Automatización de **E2E-12** y **E2E-13** (interacción con Leaflet/OSM).
-- [ ] Configuración del visor de trazas (`Trace Viewer`) y reporte HTML automático.
+### 🟢 Fase 4: Pruebas de Ubicación/Mapa y Reportes
+- [x] Automatización de **E2E-12** (cambio de cementerio → coordenadas + recentrado) y **E2E-13** (marcado manual en mapa) en `04_ubicacion_mapa.spec.ts`.
+- [x] Configuración del visor de trazas (`Trace Viewer`) y reporte HTML automático (ya presentes en `playwright.config.ts`: `reporter html`, `trace: retain-on-failure`, `screenshot: only-on-failure`).
+
+> **Nota de entorno:** el sitio usa **Google Maps** (`map_provider=googlemaps` con API key), no Leaflet/OSM como preveía el plan. La API de Google se carga de forma asíncrona y la inicialización del mapa compite con un *polyfill* Leaflet, por lo que las pruebas son **agnósticas de proveedor** (detectan `setView` de Leaflet o `setCenter` de Google) y disparan el manejador de clic del mapa de forma determinista.
 
 ---
 
 ## 7. Criterios de Aceptación para Regresión
-1. Todos los tests de la suite priorizada (Fases 1, 2 y 3) pasan en modo headless y modo interactivo (`exit code 0`).
+1. Todos los tests de la suite priorizada (Fases 1 a 4) pasan en modo headless y modo interactivo (`exit code 0`).
 2. Las pruebas no dejan archivos basura en `images/legado/difuntos/` tras su ciclo de limpieza (teardown).
 3. Reporte HTML ejecutable y visualizable con capturas de evidencia de cada paso.
 

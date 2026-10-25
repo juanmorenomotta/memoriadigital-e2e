@@ -22,6 +22,9 @@ export const routes = {
   login: (lang: Lang) => `${prefix(lang)}/component/users?view=login`,
   profile: (lang: Lang) => `${prefix(lang)}/component/users/profile`,
   newDifunto: (lang: Lang) => `${prefix(lang)}/component/legado?view=midifunto&layout=edit`,
+  misDifuntos: (lang: Lang) => `${prefix(lang)}/component/legado?view=misdifuntos`,
+  editDifunto: (lang: Lang, id: number | string) =>
+    `${prefix(lang)}/component/legado?view=midifunto&layout=edit&id=${encodeURIComponent(String(id))}`,
 };
 
 /** El login aparece como `?view=login` o como sufijo SEF `/users/login`. */
